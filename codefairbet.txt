@@ -1,0 +1,42 @@
+var crypto = require("crypto");
+
+/* ---- SAMPLE DATA ---- */
+
+var server_seed="ab19a2debf40a85c7688d391354ae824468f61a9b9deecc77cd2d0825a2553a3";
+var client_seed="cd321dfa5d";
+var nonce="6175";
+var betResult="561898";
+
+/* ---- HASH FUNCTION TO GET SERVER SEED HASH---- */
+
+function sha512(x)
+{
+	return crypto.createHash("sha512").update(x).digest().toString("hex");
+}
+
+/* ---- VALIDATE BET FUNCTION ---- */
+
+const SIZE=4;
+const TOP=1000000;
+
+var input=server_seed + ":" + nonce + ":" + client_seed;
+var b=new Buffer.from(new String(input));
+
+var q=crypto.createHash("sha512")
+		.update(crypto.createHash("sha512")
+		.update(b).digest()).digest();
+var r=Buffer.alloc(SIZE,0);
+for (var i=0;i<q.length;++i)
+	r[i%SIZE]=(r[i%SIZE]+q[i])%256;
+var result=r.readUIntBE(0, 4) % TOP;
+
+/* ---- RESULT OUTPUT ---- */
+
+console.log("SERVER SEED HASH GIVEN BY SERVER: " + sha512(server_seed));
+console.log("BET RESULT FROM SERVER: " + betResult);
+console.log("CALCULATED BET RESULT: " + result);
+if (betResult == result) {
+	console.log("ALL OK - BET VERIFIED!");
+} else {
+	console.log("NOT VERIFIED!");
+}
